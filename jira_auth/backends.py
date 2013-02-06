@@ -14,16 +14,16 @@ class JiraBackend(ModelBackend):
         """
         Main authentication method
         """
-        jira_config = self._get_jira_config()
-        if not jira_config:
+        jira_url = self._get_jira_config()
+        if not jira_url:
             return None
         user = self._find_existing_user(username)
-        resp, content = self._call_jira(username, password, crowd_config)
+        resp, content = self._call_jira(username, password, jira_url)
         if resp['status'] == '200':
             if user:
                 user.set_password(password)
             else:
-                self._create_new_user_from_jira_response(username, password, content, crowd_config)
+                self._create_new_user_from_jira_response(username, password, content, jira_url)
             return user
         else:
             return None
@@ -47,13 +47,13 @@ class JiraBackend(ModelBackend):
         else:
             return users[0]
 
-    def _call_jira(self, username, password, crowd_config):
+    def _call_jira(self, username, password, jira_url):
         """
         Calls Jira user directory service via REST API
         """
-        body= '{"username" : "%s", "password" : "%s"}' % (username, password)
+        body = '{"username" : "%s", "password" : "%s"}' % (username, password)
         h = httplib2.Http()
-        url = "https://jira.mysudo.me/rest/auth/latest/session"
+        url = jira_url + "/auth/latest/session"
         resp, content = h.request(url, "POST", body=body, headers={'content-type': 'application/json'})
         return resp, content # sorry for this verbosity, but it gives a better understanding
 
