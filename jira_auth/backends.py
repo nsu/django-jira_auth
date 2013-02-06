@@ -57,7 +57,7 @@ class JiraBackend(ModelBackend):
         resp, content = h.request(url, "POST", body=body, headers={'content-type': 'application/json'})
         return resp, content # sorry for this verbosity, but it gives a better understanding
 
-    def _create_new_user_from_crowd_response(self, username, password, content, crowd_config):
+    def _create_new_user_from_jira_response(self, username, password, content, crowd_config):
         """
         Creating a new user in django auth database basing on information provided by CROWD. Private service method.
         """
