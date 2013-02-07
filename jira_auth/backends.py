@@ -3,6 +3,7 @@ from django.conf import settings
 from xml.dom.minidom import parseString
 from django.contrib.auth.backends import ModelBackend
 import httplib2
+import json
 
 
 class JiraBackend(ModelBackend):
@@ -57,14 +58,13 @@ class JiraBackend(ModelBackend):
         resp, content = h.request(url, "POST", body=body, headers={'content-type': 'application/json'})
         return resp, content # sorry for this verbosity, but it gives a better understanding
 
-    def _create_new_user_from_jira_response(self, username, password, content, crowd_config):
+    def _create_new_user_from_jira_response(self, username, password, content, jira_url):
         """
         Creating a new user in django auth database basing on information provided by CROWD. Private service method.
         """
-        # content_parsed = self._parse_crowd_response(content)
-        user = User.objects.create_user(username, "test@example.com", password)
-        # user.first_name = content_parsed['first_name']
-        # user.last_name = content_parsed['last_name']
+        user_data = self._get_user_data(username, password, jira_config)
+        email = user_data['email']
+        user = User.objects.create_user(username, email, password)
         user.is_active = True
         # auto-superuser goodness goes here once I figure things out
         # if 'superuser' in crowd_config and crowd_config['superuser']:
@@ -72,6 +72,15 @@ class JiraBackend(ModelBackend):
         #     user.is_staff = user.is_superuser
         user.save()
         return user
+        
+    def _get_user_data(self, username, password, jira_config):
+        body = '{"username" : "%s", "password" : "%s"}' % (username, password)
+        h = httplib2.Http()
+        url = jira_url + "/api/latest/user?username=%s" % username
+        auth = username + ':' + password
+        auth = auth.encode('base64')
+        resp, content = h.request(url, "GET", headers={ 'Authorization' : 'Basic ' + auth })
+        return json.loads(content)
 
     def _parse_crowd_response(self, content):
         """
