@@ -63,11 +63,10 @@ class JiraBackend(ModelBackend):
         Creating a new user in django auth database basing on information provided by CROWD. Private service method.
         """
         user_data = self._get_user_data(username, password, jira_url)
-        print user_data
         if not user_data:
             email = "user@example.com"
         else:
-            email = user_data['email']
+            email = user_data['emailAddress']
         user = User.objects.create_user(username, email, password)
         user.is_active = True
         # auto-superuser goodness goes here once I figure things out
