@@ -62,7 +62,7 @@ class JiraBackend(ModelBackend):
         """
         Creating a new user in django auth database basing on information provided by CROWD. Private service method.
         """
-        user_data = self._get_user_data(username, password, jira_config)
+        user_data = self._get_user_data(username, password, jira_url)
         email = user_data['email']
         user = User.objects.create_user(username, email, password)
         user.is_active = True
@@ -73,7 +73,7 @@ class JiraBackend(ModelBackend):
         user.save()
         return user
         
-    def _get_user_data(self, username, password, jira_config):
+    def _get_user_data(self, username, password, jira_url):
         body = '{"username" : "%s", "password" : "%s"}' % (username, password)
         h = httplib2.Http()
         url = jira_url + "/api/latest/user?username=%s" % username
